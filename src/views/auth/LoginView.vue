@@ -28,15 +28,16 @@ function onClick() {
 
       <v-main>
         <v-container class="mt-16">
-          <v-card
+          <v-card class="mx-auto text-center pt-5" max-width="450" outlined elevation="24">
+            <!-- Card Title -->
+            <v-card-title class="text-h5 font-weight-bold">
+              <div>
+                <img src="/moodbaselogo.png" alt="logo" width="100px" height="100px" />
+              </div>
 
-            class="mx-auto text-center pt-5"
-            max-width="450"
-            title="Login to MoodPro!"
-            outlined
-            elevation="24"
-          >
-        
+              Login to MoodBased!
+            </v-card-title>
+
             <v-container>
               <!-- Email Field -->
               <v-text-field
@@ -65,22 +66,25 @@ function onClick() {
             <v-divider></v-divider>
 
             <!-- Login Button -->
-            <v-card-actions class="d-flex justify-center">
-              <v-btn class="text-center px-6 py-3" color="success" rounded elevation="2" large prepend-icon="">
+            <v-card-actions class="d-flex justify-center mt-5">
+              <v-btn
+                class="text-center px-6 py-3"
+                color="success"
+                rounded
+                elevation="2"
+                large
+                prepend-icon="mdi-chevron-right"
+              >
                 LOGIN
-                <v-icon icon="mdi-chevron-right" class="ml-2"></v-icon>
               </v-btn>
             </v-card-actions>
-
-            <v-divider >
-              <span class="text-body-2">Don't have an account? </span>
-              <RouterLink
-                to="/register"
-                class="text-decoration-none font-weight-medium text-success"
-              >
-                Sign up
-              </RouterLink>
-            </v-divider>
+            <br>
+            <span class="text-body-2">Don't have an account? </span>
+            <RouterLink to="/register" class="text-decoration-none font-weight-medium text-success">
+              Sign up
+            </RouterLink>
+            <br>
+            <br>
           </v-card>
         </v-container>
       </v-main>
@@ -96,7 +100,7 @@ function onClick() {
           ></v-btn>
         </div>
 
-        <div class="text-caption font-weight-regular opacity-60">MoodPro 2024</div>
+        <div class="text-caption font-weight-regular opacity-60">MoodBased 2024</div>
 
         <v-divider></v-divider>
       </v-footer>

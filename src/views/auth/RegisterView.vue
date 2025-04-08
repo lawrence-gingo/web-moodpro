@@ -31,7 +31,15 @@ function onClick() {
 
       <v-main>
         <v-container>
-          <v-card class="mx-auto text-center my-5" max-width="450" title="Register to MoodPro!" elevation="24">
+          <v-card class="mx-auto text-center my-5" max-width="450" outlined elevation="24">
+            <!-- Card Title -->
+            <v-card-title class="text-h5 font-weight-bold mt-5">
+              <div>
+                <img src="/moodbaselogo.png" alt="logo" width="100px" height="100px" srcset="">
+              </div>
+              Register to MoodBased!
+            </v-card-title>
+
             <v-container>
               <!-- First Name -->
               <v-text-field
@@ -39,6 +47,7 @@ function onClick() {
                 color="primary"
                 label="First name"
                 variant="outlined"
+                rounded
               ></v-text-field>
 
               <!-- Last Name -->
@@ -47,6 +56,7 @@ function onClick() {
                 color="primary"
                 label="Last name"
                 variant="outlined"
+                rounded
               ></v-text-field>
 
               <!-- Email -->
@@ -55,6 +65,7 @@ function onClick() {
                 color="primary"
                 label="Email"
                 variant="outlined"
+                rounded
               ></v-text-field>
 
               <!-- Password -->
@@ -64,6 +75,7 @@ function onClick() {
                 label="Password"
                 placeholder="Enter your password"
                 variant="outlined"
+                rounded
               ></v-text-field>
 
               <!-- Terms Checkbox -->
@@ -80,11 +92,17 @@ function onClick() {
             <v-card-actions>
               <v-spacer></v-spacer>
 
-              <RouterLink to="/"
-                ><v-btn color="success">
+              <RouterLink to="/">
+                <v-btn class="text-center px-6 py-3"
+                color="success"
+                rounded
+                elevation="2"
+                large
+                prepend-icon="mdi-chevron-right">
                   Complete Registration
-                  <v-icon icon="mdi-chevron-right" end></v-icon> </v-btn
-              ></RouterLink>
+
+                </v-btn>
+              </RouterLink>
             </v-card-actions>
           </v-card>
         </v-container>
@@ -101,7 +119,7 @@ function onClick() {
           ></v-btn>
         </div>
 
-        <div class="text-caption font-weight-regular opacity-60">MoodPro 2024</div>
+        <div class="text-caption font-weight-regular opacity-60">MoodBased 2024</div>
 
         <v-divider></v-divider>
       </v-footer>
