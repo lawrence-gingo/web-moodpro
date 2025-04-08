@@ -1,18 +1,15 @@
 <script setup>
-
-  import { ref } from 'vue'
+import { ref } from 'vue'
 
 const theme = ref('light')
 
-function onClick () {
+function onClick() {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
 }
-
 </script>
 
 <template>
-
-<v-responsive class="border rounded" max-height="300">
+  <v-responsive class="border rounded" max-height="300">
     <v-app :theme="theme">
       <v-app-bar class="px-3">
         <v-spacer></v-spacer>
@@ -27,14 +24,9 @@ function onClick () {
 
       <v-main>
         <v-container>
-          <v-card>
-            <v-form>
-              
-            </v-form>
-          </v-card>
+
         </v-container>
       </v-main>
     </v-app>
   </v-responsive>
-
 </template>
