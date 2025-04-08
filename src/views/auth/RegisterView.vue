@@ -31,7 +31,7 @@ function onClick() {
 
       <v-main>
         <v-container>
-          <v-card class="mx-auto text-center my-5" max-width="344" title="Register to MoodPro!">
+          <v-card class="mx-auto text-center my-5" max-width="450" title="Register to MoodPro!" elevation="24">
             <v-container>
               <!-- First Name -->
               <v-text-field

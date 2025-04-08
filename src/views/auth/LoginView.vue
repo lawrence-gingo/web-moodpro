@@ -27,13 +27,16 @@ function onClick() {
       </v-app-bar>
 
       <v-main>
-        <v-container>
+        <v-container class="mt-16">
           <v-card
+
             class="mx-auto text-center pt-5"
-            max-width="400"
+            max-width="450"
             title="Login to MoodPro!"
             outlined
+            elevation="24"
           >
+        
             <v-container>
               <!-- Email Field -->
               <v-text-field
@@ -63,12 +66,12 @@ function onClick() {
 
             <!-- Login Button -->
             <v-card-actions class="d-flex justify-center">
-              <v-btn class="text-center px-6 py-3" color="success" rounded elevation="2" large>
+              <v-btn class="text-center px-6 py-3" color="success" rounded elevation="2" large prepend-icon="">
                 LOGIN
                 <v-icon icon="mdi-chevron-right" class="ml-2"></v-icon>
               </v-btn>
             </v-card-actions>
-            
+
             <v-divider >
               <span class="text-body-2">Don't have an account? </span>
               <RouterLink
