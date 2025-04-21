@@ -24,6 +24,10 @@ function onClick() {
           slim
           @click="onClick"
         ></v-btn>
+
+        <v-btn>
+          Logout
+        </v-btn>
       </v-app-bar>
 
       <v-main>

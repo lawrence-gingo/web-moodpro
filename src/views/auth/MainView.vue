@@ -491,6 +491,7 @@ playlist.value = recommendTracks(selectedMood.value)
           <button class="find-button" @click="selectMood(selectedMood)">Find Music</button>
         </div>
 
+
         <!-- Playlist Column -->
         <div class="right">
           <h2>Recommended Tracks for "{{ selectedMood }}"</h2>
