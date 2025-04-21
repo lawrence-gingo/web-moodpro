@@ -476,7 +476,7 @@ playlist.value = recommendTracks(selectedMood.value)
       <div class="container">
         <!-- Mood Selector Column -->
         <div class="left">
-          <h1>MoodTunes</h1>
+          <h1 class="title">MoodTunes</h1>
           <p class="subtitle">How are you feeling?</p>
           <div class="mood-grid">
             <button
@@ -652,5 +652,11 @@ h1 {
   font-size: 14px;
   color: #444;
   font-weight: 500;
+}
+
+.title{
+  font-size: 50px;
+  margin-bottom: 12px;
+  color: #a601a1;
 }
 </style>
