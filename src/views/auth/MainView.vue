@@ -476,8 +476,13 @@ playlist.value = recommendTracks(selectedMood.value)
       <div class="container">
         <!-- Mood Selector Column -->
         <div class="left">
-          <h1 class="title">MoodTunes</h1>
-          <p class="subtitle">How are you feeling?</p>
+          <v-row>
+
+  
+            <h1 class="title">MoodBased</h1>
+          </v-row>
+
+          <p class="subtitle mt-5">How are you feeling?</p>
           <div class="mood-grid">
             <button
               v-for="mood in moods"
@@ -491,17 +496,16 @@ playlist.value = recommendTracks(selectedMood.value)
           <button class="find-button" @click="selectMood(selectedMood)">Find Music</button>
         </div>
 
-
         <!-- Playlist Column -->
         <div class="right">
           <h2>Recommended Tracks for "{{ selectedMood }}"</h2>
           <ul class="playlist">
             <li v-for="track in playlist" :key="track.title" class="track">
               <div class="track-info mx-5">
-                <div class="track-title"> Title: {{ track.title }}</div>
-                <div class="track-album"> Album: {{ track.album }}</div>
-                <div class="track-artist"> Artist: {{ track.artist }}</div>
-                <div class="track-genre"> Genre: {{ track.genre }}</div>
+                <div class="track-title">Title: {{ track.title }}</div>
+                <div class="track-album">Album: {{ track.album }}</div>
+                <div class="track-artist">Artist: {{ track.artist }}</div>
+                <div class="track-genre">Genre: {{ track.genre }}</div>
               </div>
               <div class="track-time">{{ track.time }}</div>
             </li>
@@ -583,7 +587,9 @@ h1 {
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease;
+  transition:
+    background 0.3s ease,
+    transform 0.2s ease;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
@@ -625,7 +631,7 @@ h1 {
 
 .track:hover {
   transform: scale(1.03);
-  background: linear-gradient(90deg, #ffffff, #aa02b0);
+  background: linear-gradient(90deg, #ffbdfe, #aa02b0);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
   transition:
     transform 0.25s ease,
@@ -655,7 +661,7 @@ h1 {
   font-weight: 500;
 }
 
-.title{
+.title {
   font-size: 50px;
   margin-bottom: 12px;
   color: #a601a1;

@@ -8,60 +8,73 @@ const password = ref('')
 
 <template>
   <AppLayout>
-    <template #content
-      ><v-card class="mx-auto text-center pt-5" max-width="450" outlined elevation="24">
-        <v-card-title class="text-h5 font-weight-bold">
-          <div>
-            <img src="/moodbaselogo.png" alt="logo" width="100px" height="100px" />
-          </div>
-          Login to MoodBased!
-        </v-card-title>
+    <template #content>
+      <v-container class="d-flex justify-center align-center" style="min-height: 100vh">
+        <v-card
+          class="text-center pa-6"
+          max-width="460"
+          elevation="12"
+          style="border-radius: 24px; background: #ffffff;"
+        >
+          <v-card-title class="text-h5 font-weight-bold d-flex flex-column align-center mb-4">
+            <img src="/MoodBased-removebg-preview.png" alt="logo" width="90" height="90" class="mb-2" />
+            <span style="color: #ba55d3;">Login to MoodBased</span>
+          </v-card-title>
 
-        <v-container>
-          <v-text-field
-            v-model="email"
-            color="primary"
-            label="Email Address"
-            placeholder="Enter your email"
-            variant="outlined"
-            class="mb-4"
-            rounded
-          ></v-text-field>
+          <v-form>
+            <v-text-field
+              v-model="email"
+              color="purple"
+              label="Email Address"
+              placeholder="Enter your email"
+              variant="outlined"
+              density="comfortable"
+              class="mb-4"
+              rounded
+              hide-details
+            ></v-text-field>
 
-          <v-text-field
-            v-model="password"
-            color="primary"
-            label="Password"
-            placeholder="Enter your password"
-            variant="outlined"
-            class="mb-4"
-            type="password"
-            rounded
-          ></v-text-field>
-        </v-container>
+            <v-text-field
+              v-model="password"
+              color="purple"
+              label="Password"
+              placeholder="Enter your password"
+              variant="outlined"
+              density="comfortable"
+              class="mb-4"
+              type="password"
+              rounded
+              hide-details
+            ></v-text-field>
+          </v-form>
 
-        <v-divider></v-divider>
-
-        <v-card-actions class="d-flex justify-center mt-5">
           <v-btn
-            class="text-center px-6 py-3"
-            color="success"
+            class="mt-2 mb-5"
+            color="purple"
+            size="large"
             rounded
-            elevation="2"
-            large
-            prepend-icon="mdi-chevron-right"
+            elevation="4"
+            style="width: 100%; font-weight: bold; font-size: 16px;"
+            prepend-icon="mdi-login"
             to="/main"
           >
-            LOGIN
+            Login
           </v-btn>
-        </v-card-actions>
 
-        <br />
-        <span class="text-body-2">Don't have an account? </span>
-        <RouterLink to="/register" class="text-decoration-none font-weight-medium text-success">
-          Sign up
-        </RouterLink>
-        <br /><br /> </v-card
-    ></template>
+          <v-divider class="my-4"></v-divider>
+
+          <div class="text-body-2">
+            Don't have an account?
+            <RouterLink
+              to="/register"
+              class="font-weight-medium"
+              style="color: #6c63ff; text-decoration: none;"
+            >
+              Sign up
+            </RouterLink>
+          </div>
+        </v-card>
+      </v-container>
+    </template>
   </AppLayout>
 </template>
