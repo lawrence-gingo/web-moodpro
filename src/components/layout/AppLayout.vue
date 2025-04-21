@@ -28,7 +28,7 @@ function onClick() {
       <!-- App Bar -->
       <v-app-bar class="px-3" image="https://images.unsplash.com/photo-1734039176190-61264ba627c4?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">
         <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon> <!-- Drawer toggle button -->
-        <img src="/MoodBased-removebg-preview.png" class="mx-5" alt="MoodBased Logo" height="75px" width="75px"/>
+        <img src="/MoodBased-removebg-preview.png" class="mx-5" alt="MoodBased Logo" height="70px" width="70px"/>
         <v-spacer></v-spacer>
 
         <v-btn
