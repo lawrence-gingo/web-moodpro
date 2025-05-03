@@ -14,13 +14,12 @@ const password = ref('')
           class="text-center pa-6"
           max-width="460"
           elevation="12"
-          style="border-radius: 25px; background: #ffffff;"
+          style="border-radius: 24px; background: #ffffff;"
         >
           <v-card-title class="text-h5 font-weight-bold d-flex flex-column align-center mb-4">
             <img src="/MoodBased-removebg-preview.png" alt="logo" width="90" height="90" class="mb-2" />
             <span style="color: #ba55d3;">Login to MoodBased</span>
           </v-card-title>
-
           <v-form>
             <v-text-field
               v-model="email"
