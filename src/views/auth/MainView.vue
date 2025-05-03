@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 
+
 const moods = [
   'Happy',
   'Sad',

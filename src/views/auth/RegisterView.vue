@@ -1,5 +1,6 @@
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
+import { requiredValidator, emailValidator, passwordValidator } from '@/components/utils/validators'
 import { ref } from 'vue'
 
 const first = ref('')
@@ -42,6 +43,7 @@ const terms = ref(false)
               class="mb-4"
               rounded
               hide-details
+              required
             ></v-text-field>
 
             <!-- Last Name -->
@@ -54,6 +56,7 @@ const terms = ref(false)
               class="mb-4"
               rounded
               hide-details
+              required
             ></v-text-field>
 
             <!-- Email -->
@@ -66,6 +69,7 @@ const terms = ref(false)
               class="mb-4"
               rounded
               hide-details
+               :required="[requiredValidator, emailValidator]"
             ></v-text-field>
 
             <!-- Password -->
@@ -80,6 +84,7 @@ const terms = ref(false)
               class="mb-4"
               rounded
               hide-details
+              :required="[requiredValidator, passwordValidator]"
             ></v-text-field>
 
             <!-- Terms Checkbox -->
@@ -87,7 +92,7 @@ const terms = ref(false)
               v-model="terms"
               color="purple"
               label="I agree to the terms and conditions"
-             
+
             ></v-checkbox>
           </v-form>
 
