@@ -20,6 +20,10 @@ const password = ref('')
             <img src="/MoodBased-removebg-preview.png" alt="logo" width="90" height="90" class="mb-2" />
             <span style="color: #ba55d3;">Login to MoodBased</span>
           </v-card-title>
+<<<<<<< HEAD
+=======
+
+>>>>>>> 37dad29 (first commit)
           <v-form>
             <v-text-field
               v-model="email"
