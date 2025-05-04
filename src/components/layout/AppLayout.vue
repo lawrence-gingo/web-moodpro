@@ -1,5 +1,6 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router' // Import useRoute
 import { isAuthenticated } from '@/components/utils/supabase'
 import ProfileHeader from '@/components/commons/ProfileHeader.vue'
 
@@ -7,6 +8,8 @@ const theme = ref('light')
 const drawer = ref(false) // State for the drawer
 const isLoggedIn = ref(false) // Define isLoggedIn as a ref
 const icons = ['mdi-facebook', 'mdi-twitter', 'mdi-linkedin', 'mdi-instagram']
+
+const route = useRoute() // Get the current route
 
 function onClick() {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
@@ -20,13 +23,18 @@ const getLoggedStatus = async () => {
 onMounted(() => {
   getLoggedStatus()
 })
+
+// Check if the current route is register or login
+const isAuthPage = computed(() => {
+  return route.name === 'register' || route.name === 'login'
+})
 </script>
 
 <template>
   <v-responsive class="border rounded">
     <v-app :theme="theme">
       <!-- Navigation Drawer -->
-      <v-navigation-drawer v-model="drawer" app>
+      <v-navigation-drawer v-if="!isAuthPage" v-model="drawer" app>
         <v-list>
           <v-list-item v-if="isLoggedIn">
             <!-- ProfileHeader first to show at the top when logged in -->
@@ -40,7 +48,7 @@ onMounted(() => {
         class="px-3"
         image="https://images.unsplash.com/photo-1734039176190-61264ba627c4?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
       >
-        <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
+        <v-app-bar-nav-icon @click="drawer = !drawer" v-if="!isAuthPage"></v-app-bar-nav-icon>
         <!-- Drawer toggle button -->
         <img
           src="/MoodBased-removebg-preview.png"
