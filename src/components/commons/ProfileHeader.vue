@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import { supabase } from '@/utils/supabase'
-import { getAvatarText } from '@/utils/helpers'
+import { supabase } from '@/components/utils/supabase'
+import { getAvatarText } from '@/components/utils/helpers'
 import { formActionDefault } from '../utils/supabase'
 import { useRouter } from 'vue-router'
 

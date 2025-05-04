@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { isAuthenticated } from '@/components/utils/supabase'
-import ProfileHeader from '../commons/ProfileHeader.vue'
+import ProfileHeader from '@/components/commons/ProfileHeader.vue'
 
 const icons = ['mdi-facebook', 'mdi-twitter', 'mdi-linkedin', 'mdi-instagram']
 
@@ -39,6 +39,7 @@ onMounted(() => {
             >
               Logout
             </v-btn>
+            <ProfileHeader v-if="isLoggedIn" />
           </v-list-item>
         </v-list>
       </v-navigation-drawer>
@@ -65,7 +66,7 @@ onMounted(() => {
           @click="onClick"
         ></v-btn>
 
-        <ProfileHeader v-if="isLoggedIn" />
+
       </v-app-bar>
 
       <!-- Main Content -->
