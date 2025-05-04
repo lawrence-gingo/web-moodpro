@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { ref } from 'vue'
-import { supabase, formActionDefault } from '@/utils/supabase.js' // make sure file exists
+import { supabase, formActionDefault } from '@/utils/supabase' // make sure file exists
 
 const formDataDefault = {
   firstname: '',
