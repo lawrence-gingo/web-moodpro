@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { isAuthenticated } from '@/components/utils/supabase'
 import ProfileHeader from '@/components/commons/ProfileHeader.vue'
 
-const icons = ['mdi-facebook', 'mdi-twitter', 'mdi-linkedin', 'mdi-instagram']
+
 
 const theme = ref('light')
 const drawer = ref(false) // State for the drawer
@@ -33,18 +33,8 @@ onMounted(() => {
             <!-- ProfileHeader first to show at the top when logged in -->
             <ProfileHeader />
           </v-list-item>
-          <v-list-item>
-            <v-btn
-              prepend-icon="mdi-logout"
-              id="out"
-              class="text-center"
-              rounded
-              elevation="2"
-              to="/"
-            >
-              Logout
-            </v-btn>
-          </v-list-item>
+
+
         </v-list>
       </v-navigation-drawer>
 

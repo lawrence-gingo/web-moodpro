@@ -72,7 +72,7 @@ onMounted(() => {
     <v-row justify="center">
       <div class="mx-auto text-center">
         <!-- User Avatar -->
-        <v-avatar color="green" size="large" class="mt-5">
+        <v-avatar color="purple" size="large" class="mt-5">
           <span class="text-h5">{{ userData.initials }}</span>
         </v-avatar>
         <!-- User Full Name -->
@@ -82,7 +82,7 @@ onMounted(() => {
           {{ userData.email }}
         </p>
         <!-- Logout Button -->
-        <v-btn color="red" class="mt-3" @click="onLogout" :loading="formAction.formProcess">
+        <v-btn color="purple-lighten-1" class="mt-3" @click="onLogout" :loading="formAction.formProcess">
           Logout
         </v-btn>
       </div>

@@ -13,6 +13,7 @@ export const musicService = {
         .select('*', { count: 'exact', head: true })
 
       if (countError) {
+        console.error('Error checking existing tracks:', countError)
         throw countError
       }
 
@@ -26,10 +27,13 @@ export const musicService = {
         tracks.map((track) => ({ ...track, mood })),
       )
 
+      console.log('Tracks to insert:', tracksToInsert)
+
       // Insert tracks into the database
       const { error } = await supabase.from('tracks').insert(tracksToInsert)
 
       if (error) {
+        console.error('Error inserting tracks:', error)
         throw error
       }
 

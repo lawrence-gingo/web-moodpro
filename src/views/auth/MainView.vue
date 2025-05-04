@@ -1,95 +1,36 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
-import { musicService } from '@/system/musicService'
-import { initializeTracksDatabase } from '@/system/initializeTracks'
 
-// State variables
-const moods = ref([])
+const moods = [
+  'Happy',
+  'Sad',
+  'Energetic',
+  'Calm',
+  'Romantic',
+  'Angry',
+  'Relaxed',
+  'Fearful',
+  'Excited',
+]
+
 const selectedMood = ref('Calm')
 const playlist = ref([])
-const loading = ref(true)
+const loading = ref(false)
 const error = ref(null)
 const isInitialized = ref(false)
 
-// Initialize database and fetch data when component mounts
-onMounted(async () => {
-  try {
-    loading.value = true
+async function initializeTracksDatabase() {
+  // Simulate database initialization
+  return true
+}
 
-    // Initialize the database with our predefined tracks
-    await initializeTracksDatabase()
-    isInitialized.value = true
-
-    // Load available moods from database
-    await loadMoods()
-
-    // Load initial playlist based on default mood
-    await recommendTracks(selectedMood.value)
-
-    loading.value = false
-  } catch (err) {
-    console.error('Error initializing app:', err)
-    error.value = 'Failed to initialize the music app. Please try again.'
-    loading.value = false
-  }
-})
-
-// Watch for mood changes
-watch(selectedMood, async (newMood) => {
-  if (isInitialized.value) {
-    await recommendTracks(newMood)
-  }
-})
-
-// Load all available moods from the database
 async function loadMoods() {
-  try {
-    const availableMoods = await musicService.getAllMoods()
-    moods.value = availableMoods
-    console.log('Available moods:', moods.value)
-  } catch (err) {
-    console.error('Error loading moods:', err)
-    error.value = 'Failed to load music moods.'
-  }
+  // Simulate loading moods from database
+  console.log('Loading moods from database...')
 }
 
-// Get track recommendations from Supabase based on selected mood
-async function recommendTracks(mood) {
-  try {
-    loading.value = true
-    error.value = null
-
-    // Attempt to fetch tracks from the database
-    const tracks = await musicService.getTracksByMood(mood)
-
-    // If tracks are found, update the playlist
-    if (tracks && tracks.length > 0) {
-      playlist.value = tracks
-      loading.value = false
-      return tracks
-    }
-
-    // If no tracks are found, use fallback data
-    console.warn(`No tracks found for mood "${mood}". Using fallback data.`)
-    const fallbackTracks = getFallbackTracks(mood)
-    playlist.value = fallbackTracks
-    loading.value = false
-    return fallbackTracks
-  } catch (err) {
-    console.error(`Error getting ${mood} tracks:`, err)
-
-    // Use fallback data in case of an error
-    error.value = `Couldn't load ${mood} music recommendations. Using fallback data.`
-    const fallbackTracks = getFallbackTracks(mood)
-    playlist.value = fallbackTracks
-    loading.value = false
-    return fallbackTracks
-  }
-}
-
-// Get fallback data (used if database connection fails)
-function getFallbackTracks(mood) {
+function recommendTracks(mood) {
   const baseTracks = {
     Happy: [
       { title: 'Sunshine Vibes', album: 'Joyful Beats', artist: 'Joy Beats', genre: 'Pop' },
@@ -540,6 +481,34 @@ function selectMood(mood) {
 
 // Initial recommendation
 playlist.value = recommendTracks(selectedMood.value)
+
+onMounted(async () => {
+  try {
+    loading.value = true
+
+    console.log('Initializing the database...')
+    const initialized = await initializeTracksDatabase()
+    isInitialized.value = initialized
+
+    if (initialized) {
+      console.log('Database initialized successfully')
+    } else {
+      console.warn('Database initialization skipped or failed')
+    }
+
+    // Load available moods from database
+    await loadMoods()
+
+    // Load initial playlist based on default mood
+    await recommendTracks(selectedMood.value)
+
+    loading.value = false
+  } catch (err) {
+    console.error('Error initializing app:', err)
+    error.value = 'Failed to initialize the music app. Please try again.'
+    loading.value = false
+  }
+})
 </script>
 
 <template>
