@@ -3,11 +3,10 @@ import { ref, onMounted } from 'vue'
 import { isAuthenticated } from '@/components/utils/supabase'
 import ProfileHeader from '@/components/commons/ProfileHeader.vue'
 
-
-
 const theme = ref('light')
 const drawer = ref(false) // State for the drawer
 const isLoggedIn = ref(false) // Define isLoggedIn as a ref
+const icons = ['mdi-facebook', 'mdi-twitter', 'mdi-linkedin', 'mdi-instagram']
 
 function onClick() {
   theme.value = theme.value === 'light' ? 'dark' : 'light'
@@ -33,8 +32,6 @@ onMounted(() => {
             <!-- ProfileHeader first to show at the top when logged in -->
             <ProfileHeader />
           </v-list-item>
-
-
         </v-list>
       </v-navigation-drawer>
 
