@@ -53,7 +53,7 @@ const getUser = async () => {
     if (data && data.user && data.user.user_metadata) {
       const metadata = data.user.user_metadata
 
-      userData.value.email = metadata.email || 'No email provided'
+      userData.value.email = metadata.email || data.user.email || 'No email provided'
       userData.value.fullname = `${metadata.firstname || ''} ${metadata.lastname || ''}`.trim()
       userData.value.initials = getAvatarText(userData.value.fullname || 'User')
     }
@@ -76,13 +76,13 @@ onMounted(() => {
           <span class="text-h5">{{ userData.initials }}</span>
         </v-avatar>
         <!-- User Full Name -->
-        <h3>{{ userData.fullname }}</h3>
+        <h3>{{ userData.fullname || 'User' }}</h3>
         <!-- User Email -->
         <p class="text-caption mt-1 my-5">
           {{ userData.email }}
         </p>
         <!-- Logout Button -->
-        <v-btn color="red" class="mt-3" @click="onLogout" :loading="formAction.value.formProcess">
+        <v-btn color="red" class="mt-3" @click="onLogout" :loading="formAction.formProcess">
           Logout
         </v-btn>
       </div>

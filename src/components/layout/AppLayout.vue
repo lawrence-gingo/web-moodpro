@@ -14,7 +14,8 @@ function onClick() {
 }
 
 const getLoggedStatus = async () => {
-  isLoggedIn.value = await isAuthenticated() // Update isLoggedIn based on authentication status
+  isLoggedIn.value = await isAuthenticated()
+  console.log('isLoggedIn:', isLoggedIn.value) // Debug log
 }
 
 onMounted(() => {
@@ -28,6 +29,10 @@ onMounted(() => {
       <!-- Navigation Drawer -->
       <v-navigation-drawer v-model="drawer" app>
         <v-list>
+          <v-list-item v-if="isLoggedIn">
+            <!-- ProfileHeader first to show at the top when logged in -->
+            <ProfileHeader />
+          </v-list-item>
           <v-list-item>
             <v-btn
               prepend-icon="mdi-logout"
@@ -39,7 +44,6 @@ onMounted(() => {
             >
               Logout
             </v-btn>
-            <ProfileHeader v-if="isLoggedIn" />
           </v-list-item>
         </v-list>
       </v-navigation-drawer>
@@ -65,8 +69,6 @@ onMounted(() => {
           slim
           @click="onClick"
         ></v-btn>
-
-
       </v-app-bar>
 
       <!-- Main Content -->

@@ -1,111 +1,23 @@
-<script setup>
-import { ref, onMounted, watch } from 'vue'
-import AppLayout from '@/components/layout/AppLayout.vue'
-import { musicService } from '@/system/musicService'
-import { initializeTracksDatabase } from '@/system/initializeTracks'
+// src/utils/initializeTracks.js
+import { musicService } from '../system/musicService'
 
-// State variables
-const moods = ref([])
-const selectedMood = ref('Calm')
-const playlist = ref([])
-const loading = ref(true)
-const error = ref(null)
-const isInitialized = ref(false)
-
-// Initialize database and fetch data when component mounts
-onMounted(async () => {
-  try {
-    loading.value = true
-
-    // Initialize the database with our predefined tracks
-    await initializeTracksDatabase()
-    isInitialized.value = true
-
-    // Load available moods from database
-    await loadMoods()
-
-    // Load initial playlist based on default mood
-    await recommendTracks(selectedMood.value)
-
-    loading.value = false
-  } catch (err) {
-    console.error('Error initializing app:', err)
-    error.value = 'Failed to initialize the music app. Please try again.'
-    loading.value = false
-  }
-})
-
-// Watch for mood changes
-watch(selectedMood, async (newMood) => {
-  if (isInitialized.value) {
-    await recommendTracks(newMood)
-  }
-})
-
-// Load all available moods from the database
-async function loadMoods() {
-  try {
-    const availableMoods = await musicService.getAllMoods()
-    moods.value = availableMoods
-    console.log('Available moods:', moods.value)
-  } catch (err) {
-    console.error('Error loading moods:', err)
-    error.value = 'Failed to load music moods.'
-  }
-}
-
-// Get track recommendations from Supabase based on selected mood
-async function recommendTracks(mood) {
-  try {
-    loading.value = true
-    error.value = null
-
-    // Attempt to fetch tracks from the database
-    const tracks = await musicService.getTracksByMood(mood)
-
-    // If tracks are found, update the playlist
-    if (tracks && tracks.length > 0) {
-      playlist.value = tracks
-      loading.value = false
-      return tracks
-    }
-
-    // If no tracks are found, use fallback data
-    console.warn(`No tracks found for mood "${mood}". Using fallback data.`)
-    const fallbackTracks = getFallbackTracks(mood)
-    playlist.value = fallbackTracks
-    loading.value = false
-    return fallbackTracks
-  } catch (err) {
-    console.error(`Error getting ${mood} tracks:`, err)
-
-    // Use fallback data in case of an error
-    error.value = `Couldn't load ${mood} music recommendations. Using fallback data.`
-    const fallbackTracks = getFallbackTracks(mood)
-    playlist.value = fallbackTracks
-    loading.value = false
-    return fallbackTracks
-  }
-}
-
-// Get fallback data (used if database connection fails)
-function getFallbackTracks(mood) {
-  const baseTracks = {
-    Happy: [
-      { title: 'Sunshine Vibes', album: 'Joyful Beats', artist: 'Joy Beats', genre: 'Pop' },
-      { title: 'Cheer Up!', album: 'Smiley Sounds', artist: 'Smiley Sounds', genre: 'Pop' },
-      { title: 'Bubble Pop', album: 'Fun Factory', artist: 'Fun Factory', genre: 'Pop' },
-      { title: 'Bright Morning', album: 'Daylight Tunes', artist: 'Morning Vibes', genre: 'Pop' },
-      { title: 'Happiness Overload', album: 'Feel Good', artist: 'Jolly Crew', genre: 'Pop' },
-      { title: 'Joyful Journey', album: 'Sunshine Days', artist: 'Vibe Squad', genre: 'Pop' },
-      { title: 'Up and Away', album: 'Good Vibes', artist: 'Energetic Waves', genre: 'Pop' },
-      { title: 'Waves of Joy', album: 'Happy Beats', artist: 'Rhythm Star', genre: 'Pop' },
-      {
-        title: 'Bright Side',
-        album: 'Optimistic Rhythms',
-        artist: 'Sunshine Groove',
-        genre: 'Pop',
-      },
+// Database of tracks organized by mood
+const trackDatabase = {
+  Happy: [
+    { title: 'Sunshine Vibes', album: 'Joyful Beats', artist: 'Joy Beats', genre: 'Pop' },
+    { title: 'Cheer Up!', album: 'Smiley Sounds', artist: 'Smiley Sounds', genre: 'Pop' },
+    { title: 'Bubble Pop', album: 'Fun Factory', artist: 'Fun Factory', genre: 'Pop' },
+    { title: 'Bright Morning', album: 'Daylight Tunes', artist: 'Morning Vibes', genre: 'Pop' },
+    { title: 'Happiness Overload', album: 'Feel Good', artist: 'Jolly Crew', genre: 'Pop' },
+    { title: 'Joyful Journey', album: 'Sunshine Days', artist: 'Vibe Squad', genre: 'Pop' },
+    { title: 'Up and Away', album: 'Good Vibes', artist: 'Energetic Waves', genre: 'Pop' },
+    { title: 'Waves of Joy', album: 'Happy Beats', artist: 'Rhythm Star', genre: 'Pop' },
+    {
+      title: 'Bright Side',
+      album: 'Optimistic Rhythms',
+      artist: 'Sunshine Groove',
+      genre: 'Pop',
+    },
       { title: 'Smiles', album: 'Positive Energy', artist: 'Vibe Masters', genre: 'Pop' },
       {
         title: 'Dancing Hearts',
@@ -525,215 +437,21 @@ function getFallbackTracks(mood) {
         album: 'Party Anthem',
         artist: 'The Black Eyed Peas',
         genre: 'Pop',
-      },
-    ],
+    },
+  ],
+}
+
+/**
+ * Initialize the Supabase database with track data
+ */
+export async function initializeTracksDatabase() {
+  try {
+    console.log('Initializing track database...')
+    await musicService.initializeDatabase(trackDatabase)
+    console.log('Track database initialization complete')
+    return true
+  } catch (error) {
+    console.error('Failed to initialize tracks database:', error)
+    return false
   }
-
-  const tracks = baseTracks[mood] || []
-  return tracks.sort(() => 0.5 - Math.random()).slice(0, 3)
 }
-
-function selectMood(mood) {
-  selectedMood.value = mood
-  playlist.value = recommendTracks(mood)
-}
-
-// Initial recommendation
-playlist.value = recommendTracks(selectedMood.value)
-</script>
-
-<template>
-  <AppLayout>
-    <template #content>
-      <div class="container">
-        <!-- Mood Selector Column -->
-        <div class="left">
-          <v-row>
-            <h1 class="title">MoodBased</h1>
-          </v-row>
-
-          <p class="subtitle mt-5">How are you feeling?</p>
-          <div class="mood-grid">
-            <button
-              v-for="mood in moods"
-              :key="mood"
-              @click="selectMood(mood)"
-              :class="['mood-button', { active: selectedMood === mood }]"
-            >
-              {{ mood }}
-            </button>
-          </div>
-          <button class="find-button" @click="selectMood(selectedMood)">Find Music</button>
-        </div>
-
-        <!-- Playlist Column -->
-        <div class="right">
-          <h2>Recommended Tracks for "{{ selectedMood }}"</h2>
-          <ul class="playlist">
-            <li v-for="track in playlist" :key="track.title" class="track">
-              <div class="track-info mx-5">
-                <div class="track-title">Title: {{ track.title }}</div>
-                <div class="track-album">Album: {{ track.album }}</div>
-                <div class="track-artist">Artist: {{ track.artist }}</div>
-                <div class="track-genre">Genre: {{ track.genre }}</div>
-              </div>
-              <div class="track-time">{{ track.time }}</div>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </template>
-  </AppLayout>
-</template>
-
-<style scoped>
-.container {
-  display: flex;
-  gap: 40px;
-  padding: 40px;
-  flex-direction: row;
-  font-family: 'Segoe UI', sans-serif;
-}
-
-.left,
-.right {
-  flex: 1;
-}
-
-h1 {
-  font-size: 32px;
-  margin-bottom: 12px;
-  color: #333;
-}
-
-.subtitle {
-  font-size: 18px;
-  color: #666;
-  margin-bottom: 25px;
-}
-
-.mood-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.mood-button {
-  padding: 14px 12px;
-  border: 2px solid #ccc;
-  background-color: #f8f8f8;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: #333;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.mood-button:hover {
-  background: linear-gradient(90deg, #c491c4, #d828de);
-  transform: scale(1.1);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-}
-
-.mood-button.active {
-  background: linear-gradient(90deg, #b265c1, #9c03cf);
-  color: white;
-  border-color: #ed63ff;
-  transform: scale(1.05);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-}
-
-.find-button {
-  width: 100%;
-  padding: 16px;
-  background: linear-gradient(90deg, #b265c1, #9c03cf);
-  color: white;
-  font-weight: bold;
-  font-size: 18px;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition:
-    background 0.3s ease,
-    transform 0.2s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.find-button:hover {
-  background: linear-gradient(90deg, #c491c4, #d828de);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
-}
-
-.find-button:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-}
-
-.right h2 {
-  font-size: 22px;
-  margin-bottom: 20px;
-  color: #444;
-}
-
-.playlist {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.track {
-  display: flex;
-  align-items: center;
-  background: #f9f9f9;
-  margin-bottom: 15px;
-  padding: 12px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.track:hover {
-  transform: scale(1.03);
-  background: linear-gradient(90deg, #ffbdfe, #aa02b0);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
-}
-
-.track-info {
-  flex-grow: 1;
-}
-
-.track-title {
-  font-weight: 600;
-  font-size: 16px;
-  color: #222;
-}
-
-.track-album,
-.track-artist,
-.track-genre {
-  font-size: 14px;
-  color: #777;
-}
-
-.track-time {
-  font-size: 14px;
-  color: #444;
-  font-weight: 500;
-}
-
-.title {
-  font-size: 50px;
-  margin-bottom: 12px;
-  color: #a601a1;
-}
-</style>
