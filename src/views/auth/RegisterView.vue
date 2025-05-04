@@ -1,12 +1,34 @@
-<script setup>
+<script lang="ts" setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { ref } from 'vue'
+import { supabase, formActionDefault } from '@/utils/supabase.js'
 
-const first = ref('')
-const last = ref('')
-const email = ref('')
-const password = ref('')
+const formDataDefault = {
+  firstname: '',
+  lastname: '',
+  email: '',
+  password: '',
+  password_confirmation: ''
+}
+
+const formData = ref({ ...formDataDefault })
+const formAction = ref({ ...formActionDefault })
+
+const isPasswordVisible = ref(false)
+const isPasswordConfirmVisible = ref(false)
 const terms = ref(false)
+const refVForm = ref()
+
+const onSubmit = () => {
+  // handle registration logic here
+  console.log('Submitted:', formData.value)
+}
+
+const onFormSubmit = () => {
+  refVForm.value?.validate().then(({ valid }) => {
+    if (valid) onSubmit()
+  })
+}
 </script>
 
 <template>
@@ -31,10 +53,10 @@ const terms = ref(false)
             <span style="color: #ba55d3;">Register to MoodBased</span>
           </v-card-title>
 
-          <v-form>
+          <v-form ref="refVForm" @submit.prevent="onFormSubmit">
             <!-- First Name -->
             <v-text-field
-              v-model="first"
+              v-model="formData.firstname"
               color="purple"
               label="First name"
               variant="outlined"
@@ -42,11 +64,11 @@ const terms = ref(false)
               class="mb-4"
               rounded
               hide-details
-            ></v-text-field>
+            />
 
             <!-- Last Name -->
             <v-text-field
-              v-model="last"
+              v-model="formData.lastname"
               color="purple"
               label="Last name"
               variant="outlined"
@@ -54,11 +76,11 @@ const terms = ref(false)
               class="mb-4"
               rounded
               hide-details
-            ></v-text-field>
+            />
 
             <!-- Email -->
             <v-text-field
-              v-model="email"
+              v-model="formData.email"
               color="purple"
               label="Email"
               variant="outlined"
@@ -66,46 +88,62 @@ const terms = ref(false)
               class="mb-4"
               rounded
               hide-details
-            ></v-text-field>
+            />
 
             <!-- Password -->
             <v-text-field
-              v-model="password"
+              v-model="formData.password"
               color="purple"
               label="Password"
               placeholder="Enter your password"
-              type="password"
+              :type="isPasswordVisible ? 'text' : 'password'"
+              append-inner-icon="mdi-eye"
+              @click:append-inner="isPasswordVisible = !isPasswordVisible"
               variant="outlined"
               density="comfortable"
               class="mb-4"
               rounded
               hide-details
-            ></v-text-field>
+            />
+
+            <!-- Confirm Password -->
+            <v-text-field
+              v-model="formData.password_confirmation"
+              color="purple"
+              label="Confirm Password"
+              placeholder="Repeat your password"
+              :type="isPasswordConfirmVisible ? 'text' : 'password'"
+              append-inner-icon="mdi-eye"
+              @click:append-inner="isPasswordConfirmVisible = !isPasswordConfirmVisible"
+              variant="outlined"
+              density="comfortable"
+              class="mb-4"
+              rounded
+              hide-details
+            />
 
             <!-- Terms Checkbox -->
             <v-checkbox
               v-model="terms"
               color="purple"
               label="I agree to the terms and conditions"
-             
-            ></v-checkbox>
-          </v-form>
+            />
 
-          <v-btn
-            color="purple"
-            size="large"
-            rounded
-            elevation="4"
-            style="width: 100%; font-weight: bold; font-size: 16px"
-            prepend-icon="mdi-check"
-            :disabled="!terms"
-            to="/"
-          >
-            Complete Registration
-          </v-btn>
+            <v-btn
+              type="submit"
+              color="purple"
+              size="large"
+              rounded
+              elevation="4"
+              style="width: 100%; font-weight: bold; font-size: 16px"
+              prepend-icon="mdi-check"
+              :disabled="!terms"
+            >
+              Complete Registration
+            </v-btn>
+          </v-form>
         </v-card>
       </v-container>
     </template>
   </AppLayout>
 </template>
-
