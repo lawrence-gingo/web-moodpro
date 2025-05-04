@@ -22,8 +22,12 @@ const router = createRouter({
       path: '/main',
       name: 'main',
       component: MainView
-    }
-
+    },
+    {
+      path: '/main',
+      name: 'main',
+      component: MainView
+    },
   ]
 })
 

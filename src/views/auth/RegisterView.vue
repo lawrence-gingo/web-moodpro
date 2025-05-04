@@ -3,7 +3,10 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import { requiredValidator, emailValidator, passwordValidator } from '@/components/utils/validators'
 import { ref } from 'vue'
 import { supabase } from '@/components/utils/supabase.js'
+import { useRouter } from 'vue-router'
 
+
+const router = useRouter()
 // Form data with proper binding
 const formData = ref({
   firstname: '',
@@ -44,6 +47,7 @@ const onSubmit = async () => {
     } else if (data) {
       console.log("Registration successful:", data)
       formAction.value.formSuccessMessage = 'Registration successful! Please check your email to verify your account.'
+      router.replace('/login')
     }
   } catch (err) {
     console.error("Unexpected error:", err)
@@ -77,6 +81,7 @@ const onFormSubmit = () => {
 
   onSubmit()
 }
+
 </script>
 
 <template>
