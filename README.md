@@ -1,16 +1,41 @@
-# moodpro
+# MoodPro - Mood-Based Music Recommendation App
 
-This template should help get you started developing with Vue 3 in Vite.
+A web application that recommends music tracks based on the user's mood using Supabase as the backend.
 
-## Recommended IDE Setup
+## Features
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- User authentication (login/register) using Supabase Auth
+- Mood-based music recommendations
+- Like/save favorite tracks
+- User profiles and playlists
+- Responsive UI with Vuetify
 
-## Customize configuration
+## Database Structure
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+The application uses Supabase with the following tables:
+- **music**: Stores music tracks with title, artist, album, genre, and mood_id
+- **moods**: Stores available mood options with name and description
+- **users**: Managed by Supabase Auth
+- **liked_tracks**: Tracks liked by users
+- **playlists**: User-created playlists
 
 ## Project Setup
+
+### Prerequisites
+
+- Node.js (v16 or higher)
+- Supabase account with project set up
+
+### Environment Setup
+
+Create a `.env` file in the root directory with your Supabase credentials:
+
+```
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### Installation
 
 ```sh
 npm install
