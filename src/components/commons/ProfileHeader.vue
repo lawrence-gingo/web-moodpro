@@ -43,6 +43,7 @@ const onLogout = async () => {
 // Fetch user data
 const getUser = async () => {
   try {
+    // First get the authenticated user
     const { data, error } = await supabase.auth.getUser()
 
     if (error) {
@@ -50,12 +51,43 @@ const getUser = async () => {
       return
     }
 
-    if (data && data.user && data.user.user_metadata) {
-      const metadata = data.user.user_metadata
-
-      userData.value.email = metadata.email || data.user.email || 'No email provided'
-      userData.value.fullname = `${metadata.firstname || ''} ${metadata.lastname || ''}`.trim()
-      userData.value.initials = getAvatarText(userData.value.fullname || 'User')
+    if (data && data.user) {
+      // Set email from auth data
+      userData.value.email = data.user.email || 'No email provided'
+      
+      // Now fetch the user profile from the profiles table to get the full name
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', data.user.id)
+        .single()
+      
+      if (profileError) {
+        console.error('Error fetching profile:', profileError)
+      }
+      
+      if (profileData) {
+        // Use first_name and last_name from the profiles table
+        userData.value.fullname = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim()
+      } else {
+        // Fallback to metadata if profile not found
+        const metadata = data.user.user_metadata || {}
+        userData.value.fullname = `${metadata.firstname || metadata.first_name || ''} ${metadata.lastname || metadata.last_name || ''}`.trim()
+      }
+      
+      // If fullname is still empty, use the email username as a fallback
+      if (!userData.value.fullname) {
+        const emailName = userData.value.email.split('@')[0]
+        if (emailName) {
+          // Convert email name to proper case
+          userData.value.fullname = emailName.charAt(0).toUpperCase() + emailName.slice(1)
+        } else {
+          userData.value.fullname = 'User'
+        }
+      }
+      
+      // Generate initials from the fullname
+      userData.value.initials = getAvatarText(userData.value.fullname)
     }
   } catch (err) {
     console.error('Error in getUser function:', err)

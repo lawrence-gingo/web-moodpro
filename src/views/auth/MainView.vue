@@ -1,512 +1,209 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, watchEffect } from 'vue'
+import { storeToRefs } from 'pinia'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import { useMoodStore } from '@/stores/moodStore'
+import { useAuthStore } from '@/stores/authStore'
+import { useUserStore } from '@/stores/userStore'
+import { supabase } from '@/components/utils/supabase'
+import { seedAllData, seedPlaylists, addTracksToPlaylist } from '@/components/utils/seedData'
 
-const moods = [
-  'Happy',
-  'Sad',
-  'Energetic',
-  'Calm',
-  'Romantic',
-  'Angry',
-  'Relaxed',
-  'Fearful',
-  'Excited',
-]
+// Initialize stores
+const moodStore = useMoodStore()
+const userStore = useUserStore()
 
-const selectedMood = ref('Calm')
-const playlist = ref([])
-const loading = ref(false)
-const error = ref(null)
-const isInitialized = ref(false)
+// Extract reactive state from stores
+const { moods, currentPlaylist, isLoading, error } = storeToRefs(moodStore)
+const { likedTracks } = storeToRefs(userStore)
 
-async function initializeTracksDatabase() {
-  // Simulate database initialization
-  return true
+// Local state
+const selectedMoodId = ref(null)
+const showPlaylistModal = ref(false)
+const selectedTrackId = ref(null)
+const addToPlaylistStatus = ref({
+  loading: false,
+  success: false,
+  error: null
+})
+
+// Computed property for current mood name
+const selectedMoodName = computed(() => {
+  if (!selectedMoodId.value) return ''
+  const found = moods.value.find(m => m.id === selectedMoodId.value)
+  return found ? found.name : ''
+})
+
+// Function to handle mood selection
+async function selectMood(moodId) {
+  selectedMoodId.value = moodId
+  await moodStore.getRecommendedTracks(moodId)
 }
 
-async function loadMoods() {
-  // Simulate loading moods from database
-  console.log('Loading moods from database...')
+// Check if a track is liked by the user
+const isTrackLiked = (trackId) => {
+  return likedTracks.value.some(track => track.id === trackId)
 }
 
-function recommendTracks(mood) {
-  const baseTracks = {
-    Happy: [
-      { title: 'Sunshine Vibes', album: 'Joyful Beats', artist: 'Joy Beats', genre: 'Pop' },
-      { title: 'Cheer Up!', album: 'Smiley Sounds', artist: 'Smiley Sounds', genre: 'Pop' },
-      { title: 'Bubble Pop', album: 'Fun Factory', artist: 'Fun Factory', genre: 'Pop' },
-      { title: 'Bright Morning', album: 'Daylight Tunes', artist: 'Morning Vibes', genre: 'Pop' },
-      { title: 'Happiness Overload', album: 'Feel Good', artist: 'Jolly Crew', genre: 'Pop' },
-      { title: 'Joyful Journey', album: 'Sunshine Days', artist: 'Vibe Squad', genre: 'Pop' },
-      { title: 'Up and Away', album: 'Good Vibes', artist: 'Energetic Waves', genre: 'Pop' },
-      { title: 'Waves of Joy', album: 'Happy Beats', artist: 'Rhythm Star', genre: 'Pop' },
-      {
-        title: 'Bright Side',
-        album: 'Optimistic Rhythms',
-        artist: 'Sunshine Groove',
-        genre: 'Pop',
-      },
-      { title: 'Smiles', album: 'Positive Energy', artist: 'Vibe Masters', genre: 'Pop' },
-      {
-        title: 'Dancing Hearts',
-        album: 'Cheerful Vibes',
-        artist: 'Upbeat Collective',
-        genre: 'Pop',
-      },
-      { title: 'Good Times Ahead', album: 'Feel Good Tunes', artist: 'Vibe Crew', genre: 'Pop' },
-      { title: 'Shiny Days', album: 'Blissful Soundscapes', artist: 'Melody Makers', genre: 'Pop' },
-      { title: 'Pure Bliss', album: 'Joyful Waves', artist: 'Lively Sound', genre: 'Pop' },
-      { title: 'Happiness Boost', album: 'Happy Vibes', artist: 'The Happy Crew', genre: 'Pop' },
-      { title: 'Feel the Beat', album: 'Positive Pulse', artist: 'Beats Collective', genre: 'Pop' },
-      { title: 'Euphoria', album: 'Sunshine Days', artist: 'Euphoria Beats', genre: 'Pop' },
-      { title: 'High Spirits', album: 'Daydream Vibes', artist: 'Blissful Vibes', genre: 'Pop' },
-      { title: 'Joyride', album: 'Vibe Tracks', artist: 'Rhythm Band', genre: 'Pop' },
-      { title: 'Happy Feet', album: 'Feel Good Mix', artist: 'Groove Masters', genre: 'Pop' },
-    ],
-    Sad: [
-      { title: 'Blue Hour', album: 'Lonely Nights', artist: 'Tearful Tunes', genre: 'Ballad' },
-      { title: 'Midnight Rain', album: 'Dark Hours', artist: 'The Echo', genre: 'Alternative' },
-      { title: 'Quiet Room', album: 'Melancholy', artist: 'Solitary Notes', genre: 'Ambient' },
-      { title: 'Fading Light', album: 'Lonely Heart', artist: 'Sad Souls', genre: 'Ballad' },
-      {
-        title: 'Tears in the Rain',
-        album: 'Solitude Sound',
-        artist: 'Soul Echo',
-        genre: 'Alternative',
-      },
-      {
-        title: 'Cold Night',
-        album: 'Heartbreak Symphony',
-        artist: 'Lonely Rhythms',
-        genre: 'Ambient',
-      },
-      {
-        title: 'Lost in Thought',
-        album: 'Quiet Moments',
-        artist: 'Mindful Melodies',
-        genre: 'Indie',
-      },
-      { title: 'Broken Pieces', album: 'Heartache', artist: 'Soul Cry', genre: 'Ballad' },
-      { title: 'Hollow Heart', album: 'Emotional Storm', artist: 'Sad Souls', genre: 'Ambient' },
-      { title: 'Lonely Star', album: 'Night Waves', artist: 'Dream Echoes', genre: 'Indie' },
-      {
-        title: 'Fading Dreams',
-        album: 'Dark Clouds',
-        artist: 'Melancholy Band',
-        genre: 'Alternative',
-      },
-      { title: 'Lost Love', album: 'Heartbroken', artist: 'Lonely Songs', genre: 'Ballad' },
-      { title: 'Into the Abyss', album: 'Sad Eyes', artist: 'The Forgotten', genre: 'Indie' },
-      {
-        title: 'Echoes of Silence',
-        album: 'Sad Symphony',
-        artist: 'Noisy Heart',
-        genre: 'Ambient',
-      },
-      {
-        title: 'Solitary Night',
-        album: 'Silent Roads',
-        artist: 'Echoes of Silence',
-        genre: 'Alternative',
-      },
-      { title: 'Gone', album: 'Tears Fall', artist: 'Fading Souls', genre: 'Indie' },
-      { title: 'Shattered', album: 'Heartbreak Journey', artist: 'Sad Rhythms', genre: 'Ballad' },
-      { title: 'Empty Spaces', album: 'Lost Moments', artist: 'Eternal Sorrow', genre: 'Indie' },
-      {
-        title: 'Sad Winds',
-        album: 'Wandering Souls',
-        artist: 'Alone Sounds',
-        genre: 'Alternative',
-      },
-      { title: 'Heartache', album: 'Tears', artist: 'Lonely Spirit', genre: 'Ballad' },
-    ],
-    Energetic: [
-      {
-        title: 'Power Surge',
-        album: 'Electric Energy',
-        artist: 'Electro Drive',
-        genre: 'Electronic',
-      },
-      { title: 'Go Go Go!', album: 'Upbeat Pulse', artist: 'Upbeat Unit', genre: 'Pop' },
-      { title: 'Rush Hour', album: 'High Energy', artist: 'Vibe Masters', genre: 'Electronic' },
-      { title: 'Jump Higher', album: 'Adrenaline Rush', artist: 'Energy Pulse', genre: 'Pop' },
-      { title: 'Energy Flow', album: 'Charged', artist: 'Vibe Squad', genre: 'Electronic' },
-      { title: 'Faster', album: 'Speed Surge', artist: 'Beat Factory', genre: 'Pop' },
-      { title: 'Power Up', album: 'Hyperdrive', artist: 'Energy Spark', genre: 'Electronic' },
-      { title: 'Amped Up', album: 'Electric Vibes', artist: 'Electric Pulse', genre: 'Pop' },
-      { title: 'Speed Rush', album: 'Fast Beats', artist: 'Electro Surge', genre: 'Electronic' },
-      { title: 'Excited Vibes', album: 'Beat Blaze', artist: 'Jump Beat', genre: 'Pop' },
-      { title: 'On Fire', album: 'Inferno', artist: 'Beat Blaze', genre: 'Pop' },
-      { title: 'Turbo Drive', album: 'Full Throttle', artist: 'Speed Mode', genre: 'Electronic' },
-      { title: 'Quick Dash', album: 'Fast Tracks', artist: 'Rapid Beats', genre: 'Pop' },
-      {
-        title: 'Boost Mode',
-        album: 'Adrenaline Beats',
-        artist: 'Electric Vibes',
-        genre: 'Electronic',
-      },
-      { title: 'Run Wild', album: 'Hyper Energy', artist: 'Wild Charge', genre: 'Pop' },
-      { title: 'Firestarter', album: 'Blaze', artist: 'Flame Crew', genre: 'Electronic' },
-      { title: 'The Chase', album: 'Speed Rush', artist: 'Fast Beat', genre: 'Pop' },
-      {
-        title: 'Adrenaline Rush',
-        album: 'Electric Power',
-        artist: 'Dynamic Pulse',
-        genre: 'Electronic',
-      },
-      { title: 'Quick Feet', album: 'Speed Surge', artist: 'Vibe Rush', genre: 'Pop' },
-      { title: 'Vibration', album: 'Vibe Mode', artist: 'Electric Beat', genre: 'Pop' },
-    ],
-    Calm: [
-      {
-        title: 'Tranquility',
-        album: 'Peaceful Sounds',
-        artist: 'Serenity Sounds',
-        genre: 'Ambient',
-      },
-      {
-        title: 'Lost in Thought',
-        album: 'Mindful Melodies',
-        artist: 'Mindful Melodies',
-        genre: 'Ambient',
-      },
-      {
-        title: 'Peaceful Dreams',
-        album: 'Relaxation',
-        artist: 'Harmony Collective',
-        genre: 'Ambient',
-      },
-      { title: 'Calm Waters', album: 'Stillness', artist: 'Silent Waves', genre: 'Ambient' },
-      { title: 'Evening Breeze', album: 'Gentle Winds', artist: 'Soft Winds', genre: 'Ambient' },
-      { title: 'Quiet Thoughts', album: 'Meditation', artist: 'Calming Sounds', genre: 'Ambient' },
-      {
-        title: 'Relaxing Journey',
-        album: 'Peace and Quiet',
-        artist: 'Tranquil Vibes',
-        genre: 'Ambient',
-      },
-      { title: 'Serenity', album: 'Zen', artist: 'Inner Peace', genre: 'Ambient' },
-      { title: 'Soft Echo', album: 'Stillness in the Air', artist: 'Echo Sound', genre: 'Ambient' },
-      {
-        title: 'Deep Calm',
-        album: 'Tranquil Dreams',
-        artist: 'Harmony Collective',
-        genre: 'Ambient',
-      },
-      { title: 'Gentle Waves', album: 'Ocean Breeze', artist: 'Sea Sound', genre: 'Ambient' },
-      { title: 'Silence', album: 'Calming Moments', artist: 'Quiet Beats', genre: 'Ambient' },
-      {
-        title: 'Serene Morning',
-        album: 'Peaceful Start',
-        artist: 'Soft Morning',
-        genre: 'Ambient',
-      },
-      { title: 'Still Waters', album: 'Calm Reflections', artist: 'Calm Sounds', genre: 'Ambient' },
-      {
-        title: 'Quiet Nights',
-        album: 'Silent Reflections',
-        artist: 'Silent Echo',
-        genre: 'Ambient',
-      },
-      { title: 'Dreamy Skies', album: 'Evening Dreams', artist: 'Sky Melodies', genre: 'Ambient' },
-      { title: 'Tranquil Path', album: 'Peaceful Journey', artist: 'Zen Spirit', genre: 'Ambient' },
-      { title: 'Quiet Mind', album: 'Silent Peace', artist: 'Tranquil Soul', genre: 'Ambient' },
-      { title: 'Flow', album: 'Gentle Tides', artist: 'Soundwaves', genre: 'Ambient' },
-      {
-        title: 'Soft Reflections',
-        album: 'Quiet Moments',
-        artist: 'Reflection Sound',
-        genre: 'Ambient',
-      },
-    ],
-    Romantic: [
-      { title: 'Candlelight', album: 'Love Notes', artist: 'Love Notes', genre: 'R&B' },
-      { title: 'Soft Touch', album: 'Velvet Harmony', artist: 'Velvet Harmony', genre: 'R&B' },
-      { title: 'Endless Love', album: 'Romantic Bliss', artist: 'The Lovers', genre: 'Pop' },
-      { title: 'Kiss Me', album: 'Sweet Moments', artist: 'Romantic Beats', genre: 'Pop' },
-      { title: 'Yours', album: 'Love Songs', artist: 'Heartstrings', genre: 'R&B' },
-      { title: 'Love You Like That', album: 'Romantic Rhythms', artist: 'R&B Vibes', genre: 'R&B' },
-      { title: 'Just the Way You Are', album: 'True Love', artist: 'Romantic Soul', genre: 'Pop' },
-      { title: 'Perfect', album: 'Love Tracks', artist: 'Ed Sheeran', genre: 'Pop' },
-      { title: 'I’m Yours', album: 'Melodies of Love', artist: 'Jason Mraz', genre: 'Pop' },
-      {
-        title: 'Say You Won’t Let Go',
-        album: 'Heartfelt Tunes',
-        artist: 'James Arthur',
-        genre: 'Pop',
-      },
-      { title: 'All of Me', album: 'Love Chronicles', artist: 'John Legend', genre: 'R&B' },
-      {
-        title: 'Can’t Help Falling in Love',
-        album: 'Love Classics',
-        artist: 'Elvis Presley',
-        genre: 'Pop',
-      },
-      { title: 'Fallin’', album: 'R&B Legends', artist: 'Alicia Keys', genre: 'R&B' },
-      { title: 'I Found You', album: 'The One', artist: 'Alesso & Nico & Vinz', genre: 'Pop' },
-      { title: 'Call Out My Name', album: 'Love in the Air', artist: 'The Weeknd', genre: 'R&B' },
-      { title: 'Lover', album: 'Romantic Vibes', artist: 'Taylor Swift', genre: 'Pop' },
-      { title: 'Adore You', album: 'Heartfelt Moments', artist: 'Harry Styles', genre: 'Pop' },
-      {
-        title: 'Lucky',
-        album: 'Romantic Beats',
-        artist: 'Jason Mraz & Colbie Caillat',
-        genre: 'Pop',
-      },
-      { title: 'The One', album: 'Deep Love', artist: 'The Chainsmokers', genre: 'Pop' },
-      { title: 'Back to You', album: 'Love Stories', artist: 'Selena Gomez', genre: 'Pop' },
-    ],
-    Angry: [
-      { title: 'Thunder', album: 'Rage Mode', artist: 'Rage Mode', genre: 'Rock' },
-      { title: 'Break Out', album: 'Loud Machine', artist: 'Loud Machine', genre: 'Rock' },
-      { title: 'Pain', album: 'Anger Management', artist: 'Three Days Grace', genre: 'Rock' },
-      { title: 'Disturbia', album: 'Nightmare', artist: 'Rihanna', genre: 'Pop' },
-      { title: 'Bury a Friend', album: 'Dark Side', artist: 'Billie Eilish', genre: 'Alternative' },
-      { title: 'Smells Like Teen Spirit', album: 'Nevermind', artist: 'Nirvana', genre: 'Grunge' },
-      { title: 'Bleed It Out', album: 'Minutes to Midnight', artist: 'Linkin Park', genre: 'Rock' },
-      {
-        title: 'I Will Not Bow',
-        album: 'The Sound of Madness',
-        artist: 'Breaking Benjamin',
-        genre: 'Rock',
-      },
-      {
-        title: 'Killing in the Name',
-        album: 'Rage Against the Machine',
-        artist: 'Rage Against the Machine',
-        genre: 'Metal',
-      },
-      { title: 'Numb', album: 'Meteora', artist: 'Linkin Park', genre: 'Rock' },
-      { title: 'Rollin’', album: 'Chocolate Starfish', artist: 'Limp Bizkit', genre: 'Nu Metal' },
-      { title: 'Faint', album: 'Reanimation', artist: 'Linkin Park', genre: 'Rock' },
-      { title: 'Given Up', album: 'Minutes to Midnight', artist: 'Linkin Park', genre: 'Rock' },
-      { title: 'Fight Song', album: 'Fighting Spirit', artist: 'Rachel Platten', genre: 'Pop' },
-      { title: 'My Curse', album: 'The Open Door', artist: 'Evanescence', genre: 'Rock' },
-      { title: 'Warriors', album: 'Smoke + Mirrors', artist: 'Imagine Dragons', genre: 'Pop Rock' },
-      { title: 'No Tears Left to Cry', album: 'Sweetener', artist: 'Ariana Grande', genre: 'Pop' },
-      {
-        title: 'Let the Bodies Hit the Floor',
-        album: 'Suffocate',
-        artist: 'Drowning Pool',
-        genre: 'Metal',
-      },
-      { title: 'Break the Chain', album: 'Pain Reliever', artist: 'Starset', genre: 'Rock' },
-    ],
-    Relaxed: [
-      { title: 'Chill Flow', album: 'Coastal Vibes', artist: 'Coastal Vibes', genre: 'Chillout' },
-      { title: 'Easy Breeze', album: 'Zen Sounds', artist: 'Zen Sounds', genre: 'Chillout' },
-      { title: 'Weightless', album: 'Peaceful Journey', artist: 'Allan Walker', genre: 'Chillout' },
-      {
-        title: 'Sunset Lover',
-        album: 'Chilled Beats',
-        artist: 'Petit Biscuit',
-        genre: 'Electronic',
-      },
-      { title: 'Night Owl', album: 'Late Night', artist: 'Galimatias', genre: 'Chillout' },
-      { title: 'Ocean Eyes', album: 'Chill Moments', artist: 'Billie Eilish', genre: 'Pop' },
-      {
-        title: 'Lovely',
-        album: 'Peaceful Rhythms',
-        artist: 'Billie Eilish & Khalid',
-        genre: 'Pop',
-      },
-      {
-        title: 'Warmth of the Sun',
-        album: 'Relaxation',
-        artist: 'Beach Collective',
-        genre: 'Chillout',
-      },
-      { title: 'Sunflower', album: 'Dreamy Vibes', artist: 'Post Malone & Swae Lee', genre: 'Pop' },
-      { title: 'Tides', album: 'Calm Waves', artist: 'Blackmill', genre: 'Chillout' },
-      { title: 'Lost in the Moment', album: 'Serenity', artist: 'Alina Baraz', genre: 'Chillout' },
-      {
-        title: 'Soothing Sounds',
-        album: 'Peaceful Journey',
-        artist: 'Chill Tribe',
-        genre: 'Chillout',
-      },
-      { title: 'Electric Feel', album: 'Indie Chill', artist: 'MGMT', genre: 'Indie' },
-      { title: 'Afterglow', album: 'Nightfall', artist: 'Ed Sheeran', genre: 'Pop' },
-      { title: 'Breathe Me', album: 'Quiet Nights', artist: 'Sia', genre: 'Pop' },
-      {
-        title: 'Falling In Love',
-        album: 'Love Melodies',
-        artist: 'Lana Del Rey',
-        genre: 'Indie Pop',
-      },
-      {
-        title: 'The Less I Know the Better',
-        album: 'Chill Vibes',
-        artist: 'Tame Impala',
-        genre: 'Indie',
-      },
-      { title: 'Better Together', album: 'Calm Vibes', artist: 'Jack Johnson', genre: 'Folk' },
-      {
-        title: 'Can’t Help Falling in Love',
-        album: 'Timeless',
-        artist: 'Kina Grannis',
-        genre: 'Pop',
-      },
-    ],
-    Fearful: [
-      { title: 'Dark Corners', album: 'Shadow Beats', artist: 'Shadow Beats', genre: 'Ambient' },
-      { title: 'Unknown', album: 'Whisper Vox', artist: 'Whisper Vox', genre: 'Electronic' },
-      { title: 'In the Shadows', album: 'Mystery Sound', artist: 'The Rasmus', genre: 'Rock' },
-      {
-        title: 'The Haunting',
-        album: 'Ghostly Sounds',
-        artist: 'Subliminal Fear',
-        genre: 'Dark Wave',
-      },
-      { title: 'Terror', album: 'Fear Unleashed', artist: 'Dread Waves', genre: 'Industrial' },
-      {
-        title: 'Sleep Paralysis',
-        album: 'Sleep Sounds',
-        artist: 'The Soundscapes',
-        genre: 'Ambient',
-      },
-      { title: 'Panic Attack', album: 'Anxiety', artist: 'Neurotica', genre: 'Industrial' },
-      {
-        title: 'Distorted Reality',
-        album: 'Echoes of Fear',
-        artist: 'The Unseen',
-        genre: 'Electronic',
-      },
-      {
-        title: 'The Fear Within',
-        album: 'Inner Struggles',
-        artist: 'The Silent Ones',
-        genre: 'Ambient',
-      },
-      {
-        title: 'Frightening Shadows',
-        album: 'Dark Times',
-        artist: 'Ghost Signal',
-        genre: 'Ambient',
-      },
-      { title: 'Creeping Fear', album: 'Silent Storm', artist: 'Echo Vibes', genre: 'Alternative' },
-      { title: 'Nightmare', album: 'Dark Sounds', artist: 'A Perfect Circle', genre: 'Rock' },
-      {
-        title: 'Whispers in the Dark',
-        album: 'Mysterious Nights',
-        artist: 'Electric Souls',
-        genre: 'Rock',
-      },
-      { title: 'Dread', album: 'Emotional Waves', artist: 'The Fears', genre: 'Industrial' },
-      { title: 'Tremor', album: 'Creepy Chronicles', artist: 'Waves of Fear', genre: 'Dark Wave' },
-      { title: 'Out of Sight', album: 'Unseen World', artist: 'Unknown Voices', genre: 'Ambient' },
-      {
-        title: 'I Can’t Breathe',
-        album: 'Fear Within',
-        artist: 'Suffocating Shadows',
-        genre: 'Alternative',
-      },
-      { title: 'Blood Red', album: 'Nightmare Days', artist: 'Horror Stories', genre: 'Rock' },
-      { title: 'Underground', album: 'The Hollow', artist: 'The Fear', genre: 'Industrial' },
-    ],
-    Excited: [
-      {
-        title: 'Jump Around',
-        album: 'Electric Pulse',
-        artist: 'Electric Pulse',
-        genre: 'Electronic',
-      },
-      { title: 'On Fire', album: 'Beat Blaze', artist: 'Beat Blaze', genre: 'Pop' },
-      { title: 'Lose Control', album: 'Get Energized', artist: 'Missy Elliott', genre: 'Hip-Hop' },
-      { title: 'Run the World', album: 'Girl Power', artist: 'Beyoncé', genre: 'Pop' },
-      {
-        title: 'Uptown Funk',
-        album: 'Funk Nation',
-        artist: 'Mark Ronson ft. Bruno Mars',
-        genre: 'Funk',
-      },
-      {
-        title: 'Can’t Stop the Feeling!',
-        album: 'Summer Vibes',
-        artist: 'Justin Timberlake',
-        genre: 'Pop',
-      },
-      { title: 'Party Rock Anthem', album: 'Shufflin’', artist: 'LMFAO', genre: 'Dance' },
-      {
-        title: 'Titanium',
-        album: 'Electro Pulse',
-        artist: 'David Guetta ft. Sia',
-        genre: 'Electronic',
-      },
-      { title: 'Stronger', album: 'Stronger', artist: 'Kanye West', genre: 'Hip-Hop' },
-      { title: 'Level Up', album: 'Party Mix', artist: 'Ciara', genre: 'Hip-Hop' },
-      {
-        title: 'Take Over Control',
-        album: 'Dance Pulse',
-        artist: 'Afrojack ft. Eva Simons',
-        genre: 'Electronic',
-      },
-      {
-        title: 'Feeling Myself',
-        album: 'Club Anthems',
-        artist: 'Nicki Minaj ft. Beyoncé',
-        genre: 'Hip-Hop',
-      },
-      {
-        title: 'Bang Bang',
-        album: 'Pop Hits',
-        artist: 'Jessie J, Ariana Grande, Nicki Minaj',
-        genre: 'Pop',
-      },
-      {
-        title: 'Savage Love',
-        album: 'Pop Vibes',
-        artist: 'Jawsh 685 & Jason Derulo',
-        genre: 'Pop',
-      },
-      { title: 'Don’t Start Now', album: 'Disco Fever', artist: 'Dua Lipa', genre: 'Pop' },
-      {
-        title: 'I Gotta Feeling',
-        album: 'Party Anthem',
-        artist: 'The Black Eyed Peas',
-        genre: 'Pop',
-      },
-    ],
+// Function to toggle like status
+async function toggleLike(trackId) {
+  if (isTrackLiked(trackId)) {
+    await userStore.unlikeTrack(trackId)
+  } else {
+    await userStore.likeTrack(trackId)
   }
-
-  const tracks = baseTracks[mood] || []
-  return tracks.sort(() => 0.5 - Math.random()).slice(0, 3)
 }
 
-function selectMood(mood) {
-  selectedMood.value = mood
-  playlist.value = recommendTracks(mood)
+// Function to open the playlist selection modal
+function openPlaylistModal(trackId) {
+  selectedTrackId.value = trackId
+  showPlaylistModal.value = true
+  // Reset status
+  addToPlaylistStatus.value = {
+    loading: false,
+    success: false,
+    error: null
+  }
 }
 
-// Initial recommendation
-playlist.value = recommendTracks(selectedMood.value)
+// Function to close the playlist selection modal
+function closePlaylistModal() {
+  showPlaylistModal.value = false
+  selectedTrackId.value = null
+}
+
+// Function to add the selected track to a playlist
+async function addToPlaylist(playlistId) {
+  if (!selectedTrackId.value || !playlistId) return
+  
+  addToPlaylistStatus.value.loading = true
+  addToPlaylistStatus.value.error = null
+  addToPlaylistStatus.value.success = false
+  
+  try {
+    const result = await userStore.addTrackToPlaylist(playlistId, selectedTrackId.value)
+    
+    if (result.success) {
+      addToPlaylistStatus.value.success = true
+      // Close the modal after a short delay
+      setTimeout(() => {
+        closePlaylistModal()
+      }, 1500)
+    } else {
+      addToPlaylistStatus.value.error = result.error || 'Failed to add track to playlist'
+    }
+  } catch (err) {
+    console.error('Error adding track to playlist:', err)
+    addToPlaylistStatus.value.error = err.message || 'An unexpected error occurred'
+  } finally {
+    addToPlaylistStatus.value.loading = false
+  }
+}
+
+// Set initial mood when moods are loaded
+watchEffect(() => {
+  if (moods.value.length > 0 && !selectedMoodId.value) {
+    selectedMoodId.value = moods.value[0].id
+    selectMood(selectedMoodId.value)
+  }
+})
 
 onMounted(async () => {
+  console.log('MainView mounted')
+  isLoading.value = true
+  
   try {
-    loading.value = true
-
-    console.log('Initializing the database...')
-    const initialized = await initializeTracksDatabase()
-    isInitialized.value = initialized
-
-    if (initialized) {
-      console.log('Database initialized successfully')
-    } else {
-      console.warn('Database initialization skipped or failed')
+    // First try to load existing moods and tracks
+    await moodStore.fetchMoods()
+    await moodStore.fetchTracks()
+    
+    // Check if there are any moods in the database
+    if (moods.value.length === 0) {
+      console.log('No moods found in database, seeding initial data...')
+      
+      // Seed the database with initial data
+      const seedResult = await seedAllData()
+      console.log('Seed result:', seedResult)
+      
+      // Refresh the moods and tracks after seeding
+      await moodStore.fetchMoods()
+      await moodStore.fetchTracks()
+      
+      if (seedResult.success) {
+        console.log('Database seeded successfully')
+      } else {
+        console.warn('Database seeding had issues:', seedResult.message || seedResult.error)
+      }
     }
-
-    // Load available moods from database
-    await loadMoods()
-
-    // Load initial playlist based on default mood
-    await recommendTracks(selectedMood.value)
-
-    loading.value = false
+    
+    // If we have moods now, select the first one
+    if (moods.value.length > 0) {
+      console.log(`Found ${moods.value.length} moods, selecting the first one`)
+      selectedMoodId.value = moods.value[0].id
+      await selectMood(selectedMoodId.value)
+    } else {
+      console.warn('No moods available after seeding attempt')
+      error.value = 'No mood categories available. Please try again later.'
+    }
+    
+    // Seed playlists for the user if they don't exist
+    const authStore = useAuthStore()
+    if (authStore.user && authStore.user.id) {
+      // Check if user has playlists
+      const userPlaylists = await userStore.fetchPlaylists()
+      
+      if (!userPlaylists || userPlaylists.length === 0) {
+        console.log('No playlists found for user, seeding initial playlists...')
+        
+        // Create sample playlists
+        const playlists = await seedPlaylists(authStore.user.id)
+        
+        if (playlists && playlists.length > 0) {
+          console.log(`Created ${playlists.length} playlists for user`)
+          
+          // Get all tracks to add to playlists
+          const { data: allTracks, error: tracksError } = await supabase
+            .from('music')
+            .select('id')
+            .limit(15)
+          
+          if (!tracksError && allTracks && allTracks.length > 0) {
+            // Add some tracks to the first playlist
+            const trackIds = allTracks.map(track => track.id)
+            
+            // Add first 5 tracks to first playlist
+            if (trackIds.length >= 5 && playlists[0]) {
+              await addTracksToPlaylist(playlists[0].id, trackIds.slice(0, 5))
+            }
+            
+            // Add next 5 tracks to second playlist if it exists
+            if (trackIds.length >= 10 && playlists[1]) {
+              await addTracksToPlaylist(playlists[1].id, trackIds.slice(5, 10))
+            }
+            
+            // Add remaining tracks to third playlist if it exists
+            if (trackIds.length >= 15 && playlists[2]) {
+              await addTracksToPlaylist(playlists[2].id, trackIds.slice(10, 15))
+            }
+          }
+        }
+      } else {
+        console.log(`User already has ${userPlaylists.length} playlists`)
+      }
+    }
+    
+    // Load user playlists and liked tracks
+    await userStore.fetchPlaylists()
+    await userStore.fetchLikedTracks()
+    
+    // Ensure profile is properly loaded
+    if (!userStore.profile) {
+      await userStore.fetchProfile()
+    }
   } catch (err) {
-    console.error('Error initializing app:', err)
-    error.value = 'Failed to initialize the music app. Please try again.'
-    loading.value = false
+    console.error('Error initializing MainView:', err)
+    error.value = 'Failed to load music data. Please try again.'
+  } finally {
+    isLoading.value = false
   }
 })
 </script>
@@ -514,41 +211,181 @@ onMounted(async () => {
 <template>
   <AppLayout>
     <template #content>
-      <div class="container">
-        <!-- Mood Selector Column -->
-        <div class="left">
-          <v-row>
-            <h1 class="title">MoodBased</h1>
-          </v-row>
-
-          <p class="subtitle mt-5">How are you feeling?</p>
-          <div class="mood-grid">
-            <button
-              v-for="mood in moods"
-              :key="mood"
-              @click="selectMood(mood)"
-              :class="['mood-button', { active: selectedMood === mood }]"
-            >
-              {{ mood }}
-            </button>
-          </div>
-          <button class="find-button" @click="selectMood(selectedMood)">Find Music</button>
+      <div class="app-container">
+        <!-- User Welcome Section -->
+        <div class="user-welcome" v-if="userStore.profile">
+          <h2>Welcome, {{ userStore.profile.first_name }} {{ userStore.profile.last_name }}</h2>
+          <p class="welcome-subtitle">Find the perfect music for your mood</p>
         </div>
 
-        <!-- Playlist Column -->
-        <div class="right">
-          <h2>Recommended Tracks for "{{ selectedMood }}"</h2>
-          <ul class="playlist">
-            <li v-for="track in playlist" :key="track.title" class="track">
-              <div class="track-info mx-5">
-                <div class="track-title">Title: {{ track.title }}</div>
-                <div class="track-album">Album: {{ track.album }}</div>
-                <div class="track-artist">Artist: {{ track.artist }}</div>
-                <div class="track-genre">Genre: {{ track.genre }}</div>
+        <div class="main-content">
+          <!-- Mood Selector Column -->
+          <div class="mood-section">
+            <div class="section-header">
+              <h2 class="section-title">Your Mood</h2>
+              <p class="section-subtitle">How are you feeling today?</p>
+            </div>
+
+            <div class="mood-grid">
+              <button
+                v-for="mood in moods"
+                :key="mood.id"
+                @click="selectMood(mood.id)"
+                :class="['mood-button', { active: selectedMoodId === mood.id }]"
+              >
+                {{ mood.name }}
+              </button>
+            </div>
+            <button v-if="selectedMoodId" class="find-button" @click="selectMood(selectedMoodId)">
+              <span class="button-icon">🎵</span> Find Music
+            </button>
+          </div>
+
+          <!-- Playlist Column -->
+          <div class="playlist-section">
+            <div v-if="isLoading" class="loading-container">
+              <div class="loading-spinner"></div>
+              <p>Loading your recommendations...</p>
+            </div>
+            <div v-else-if="error" class="error-container">
+              <p>{{ error }}</p>
+            </div>
+            <div v-else class="playlist-container">
+              <div class="section-header">
+                <h2 class="section-title">Recommended for "{{ selectedMoodName }}"</h2>
+                <p class="section-subtitle">Tracks that match your current mood</p>
               </div>
-              <div class="track-time">{{ track.time }}</div>
-            </li>
-          </ul>
+              
+              <p v-if="currentPlaylist.length === 0" class="no-tracks">
+                No tracks found for this mood. Try another mood or add some tracks!
+              </p>
+              <ul v-else class="track-list">
+                <li v-for="track in currentPlaylist" :key="track.id" class="track-card">
+                  <div class="track-image">
+                    <div class="album-placeholder">
+                      <span class="music-icon">🎵</span>
+                    </div>
+                  </div>
+                  <div class="track-info">
+                    <div class="track-title">{{ track.title }}</div>
+                    <div class="track-artist">{{ track.artist }}</div>
+                    <div class="track-details">
+                      <span class="track-album">{{ track.album }}</span>
+                      <span class="track-genre">{{ track.genre }}</span>
+                    </div>
+                  </div>
+                  <div class="track-actions">
+                    <button 
+                      @click="toggleLike(track.id)" 
+                      :class="['like-button', { liked: isTrackLiked(track.id) }]"
+                      :title="isTrackLiked(track.id) ? 'Remove from favorites' : 'Add to favorites'"
+                    >
+                      <span v-if="isTrackLiked(track.id)">❤️</span>
+                      <span v-else>🤍</span>
+                    </button>
+                    <button 
+                      @click="openPlaylistModal(track.id)" 
+                      class="add-to-playlist-button"
+                      title="Add to playlist"
+                    >
+                      <span>➕</span>
+                    </button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Playlists Section -->
+        <div class="playlists-section" v-if="userStore.playlists && userStore.playlists.length > 0">
+          <div class="section-header">
+            <h2 class="section-title">Your Playlists</h2>
+            <p class="section-subtitle">Collections you've created</p>
+          </div>
+          
+          <div class="playlists-grid">
+            <div v-for="playlist in userStore.playlists" :key="playlist.id" class="playlist-card">
+              <div class="playlist-header">
+                <h3 class="playlist-title">{{ playlist.name }}</h3>
+                <p class="playlist-description">{{ playlist.description }}</p>
+              </div>
+              
+              <div class="playlist-tracks" v-if="playlist.tracks && playlist.tracks.length > 0">
+                <ul class="track-list">
+                  <li v-for="track in playlist.tracks" :key="track.id" class="track-card">
+                    <div class="track-image">
+                      <div class="album-placeholder">
+                        <span class="music-icon">🎵</span>
+                      </div>
+                    </div>
+                    <div class="track-info">
+                      <div class="track-title">{{ track.title }}</div>
+                      <div class="track-artist">{{ track.artist }}</div>
+                      <div class="track-details">
+                        <span class="track-album">{{ track.album }}</span>
+                        <span class="track-genre">{{ track.genre }}</span>
+                      </div>
+                    </div>
+                    <div class="track-actions">
+                      <button 
+                        @click="toggleLike(track.id)" 
+                        :class="['like-button', { liked: isTrackLiked(track.id) }]"
+                        :title="isTrackLiked(track.id) ? 'Remove from favorites' : 'Add to favorites'"
+                      >
+                        <span v-if="isTrackLiked(track.id)">❤️</span>
+                        <span v-else>🤍</span>
+                      </button>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+              
+              <div class="empty-playlist" v-else>
+                <p>No tracks in this playlist yet</p>
+                <p class="empty-hint">Like tracks with matching moods to add them here</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Playlist Selection Modal -->
+      <div v-if="showPlaylistModal" class="modal-overlay" @click="closePlaylistModal">
+        <div class="modal-content" @click.stop>
+          <div class="modal-header">
+            <h3 class="modal-title">Add to Playlist</h3>
+            <button class="modal-close" @click="closePlaylistModal">&times;</button>
+          </div>
+          
+          <div class="modal-body">
+            <p class="modal-subtitle">Select a playlist to add this track to:</p>
+            
+            <div v-if="addToPlaylistStatus.loading" class="modal-loading">
+              <div class="loading-spinner"></div>
+              <p>Adding track to playlist...</p>
+            </div>
+            
+            <div v-else-if="addToPlaylistStatus.success" class="modal-success">
+              <p>✅ Track added to playlist successfully!</p>
+            </div>
+            
+            <div v-else-if="addToPlaylistStatus.error" class="modal-error">
+              <p>❌ {{ addToPlaylistStatus.error }}</p>
+            </div>
+            
+            <div v-else class="playlist-selection">
+              <div 
+                v-for="playlist in userStore.playlists" 
+                :key="playlist.id" 
+                class="playlist-option"
+                @click="addToPlaylist(playlist.id)"
+              >
+                <h4 class="playlist-option-title">{{ playlist.name }}</h4>
+                <p class="playlist-option-description">{{ playlist.description }}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </template>
@@ -556,148 +393,516 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.container {
+.app-container {
   display: flex;
-  gap: 40px;
-  padding: 40px;
-  flex-direction: row;
-  font-family: 'Segoe UI', sans-serif;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  padding: 30px;
+  gap: 30px;
+  background-color: #f8f9fa;
 }
 
-.left,
-.right {
+.user-welcome {
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: white;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 20px rgba(106, 17, 203, 0.2);
+}
+
+.user-welcome h2 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.welcome-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.main-content {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.mood-section, .playlist-section {
   flex: 1;
+  min-width: 300px;
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
 }
 
-h1 {
-  font-size: 32px;
-  margin-bottom: 12px;
-  color: #333;
+.playlist-section {
+  flex: 2;
+  min-width: 500px;
 }
 
-.subtitle {
-  font-size: 18px;
-  color: #666;
+.section-header {
   margin-bottom: 25px;
+}
+
+.section-title {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.section-subtitle {
+  font-size: 1rem;
+  color: #666;
 }
 
 .mood-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
 }
 
 .mood-button {
-  padding: 14px 12px;
-  border: 2px solid #ccc;
-  background-color: #f8f8f8;
+  padding: 15px;
+  border: 2px solid #eaeaea;
   border-radius: 12px;
+  background-color: white;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: #333;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.mood-button:hover {
-  background: linear-gradient(90deg, #c491c4, #d828de);
-  transform: scale(1.1);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-}
-
-.mood-button.active {
-  background: linear-gradient(90deg, #b265c1, #9c03cf);
-  color: white;
-  border-color: #ed63ff;
-  transform: scale(1.05);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-}
-
-.find-button {
-  width: 100%;
-  padding: 16px;
-  background: linear-gradient(90deg, #b265c1, #9c03cf);
-  color: white;
-  font-weight: bold;
-  font-size: 18px;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition:
-    background 0.3s ease,
-    transform 0.2s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.find-button:hover {
-  background: linear-gradient(90deg, #c491c4, #d828de);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
-}
-
-.find-button:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-}
-
-.right h2 {
-  font-size: 22px;
-  margin-bottom: 20px;
+  font-size: 1rem;
+  text-align: center;
+  font-weight: 500;
   color: #444;
 }
 
-.playlist {
+.mood-button:hover {
+  border-color: #6a11cb;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(106, 17, 203, 0.15);
+}
+
+.mood-button.active {
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: white;
+  border-color: transparent;
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(106, 17, 203, 0.25);
+}
+
+.find-button {
+  padding: 15px 25px;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: auto;
+  align-self: center;
+}
+
+.button-icon {
+  font-size: 1.2rem;
+}
+
+.find-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(106, 17, 203, 0.25);
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  gap: 20px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(106, 17, 203, 0.1);
+  border-left-color: #6a11cb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #e74c3c;
+  font-size: 1.1rem;
+  text-align: center;
+  padding: 20px;
+}
+
+.no-tracks {
+  text-align: center;
+  color: #666;
+  margin: 40px 0;
+  font-size: 1.1rem;
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.track-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-.track {
+.track-card {
   display: flex;
   align-items: center;
-  background: #f9f9f9;
-  margin-bottom: 15px;
-  padding: 12px;
+  padding: 15px;
+  background-color: #f8f9fa;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
 }
 
-.track:hover {
-  transform: scale(1.03);
-  background: linear-gradient(90deg, #ffbdfe, #aa02b0);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
+.track-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.track-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.album-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: white;
+  border-radius: 8px;
+}
+
+.music-icon {
+  font-size: 1.8rem;
 }
 
 .track-info {
-  flex-grow: 1;
+  flex: 1;
 }
 
 .track-title {
   font-weight: 600;
-  font-size: 16px;
-  color: #222;
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+  color: #333;
 }
 
-.track-album,
-.track-artist,
-.track-genre {
-  font-size: 14px;
+.track-artist {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.track-details {
+  display: flex;
+  gap: 15px;
+  font-size: 0.9rem;
   color: #777;
 }
 
-.track-time {
-  font-size: 14px;
-  color: #444;
-  font-weight: 500;
+.track-album, .track-genre {
+  display: inline-block;
+}
+
+.track-genre::before {
+  content: '•';
+  margin-right: 5px;
+}
+
+.track-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: 15px;
+}
+
+.like-button, .add-to-playlist-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  transition: transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.like-button:hover, .add-to-playlist-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.like-button.liked {
+  background-color: #fff0f0;
+}
+
+.add-to-playlist-button {
+  background-color: #f0f8ff;
+  font-size: 1.2rem;
+}
+
+/* Favorites Section */
+.favorites-section {
+  margin-top: 30px;
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  padding: 25px;
+}
+
+.favorites-content {
+  margin-top: 20px;
+}
+
+/* Playlists Section */
+.playlists-section {
+  margin-top: 30px;
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  padding: 25px;
+}
+
+.playlists-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.playlist-card {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.playlist-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.playlist-header {
+  margin-bottom: 15px;
+}
+
+.playlist-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.playlist-description {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.playlist-tracks {
+  margin-top: 15px;
+}
+
+.playlist-tracks .track-list {
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.playlist-tracks .track-card {
+  background-color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 10px;
+}
+
+.empty-playlist {
+  text-align: center;
+  padding: 20px 0;
+  color: #888;
+}
+
+.empty-hint {
+  font-size: 0.85rem;
+  margin-top: 5px;
+  color: #aaa;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  animation: modal-appear 0.3s ease-out;
+}
+
+@keyframes modal-appear {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #777;
+  transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-subtitle {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #666;
+}
+
+.playlist-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.playlist-option {
+  padding: 15px;
+  border-radius: 10px;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.playlist-option:hover {
+  background-color: #e9ecef;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.playlist-option-title {
+  margin: 0 0 5px 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.playlist-option-description {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.modal-loading, .modal-success, .modal-error {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.modal-success {
+  color: #28a745;
+}
+
+.modal-error {
+  color: #dc3545;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 15px;
+  }
+  
+  .main-content {
+    flex-direction: column;
+  }
+  
+  .mood-section, .playlist-section {
+    min-width: 100%;
+  }
+  
+  .modal-content {
+    width: 95%;
+    max-height: 70vh;
+  }
+}
+
+.error {
+  color: #e53935;
 }
 
 .title {
